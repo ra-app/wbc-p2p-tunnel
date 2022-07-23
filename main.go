@@ -41,7 +41,7 @@ var (
 			{
 				URLs: []string{
 					"stun:stun.l.google.com:19302",
-					"stun.12connect.com:3478",
+					"stun:12connect.com:3478",
 					"stun:stun.12voip.com:3478",
 					"stun:stun.1und1.de:3478",
 					"stun:stun.3cx.com:3478",
