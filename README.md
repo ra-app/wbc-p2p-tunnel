@@ -7,21 +7,6 @@ ssh p2p tunneling server and client
 2. ssh-p2p client <----negotiation----> ssh-p2p server
 3. sshd <--dial--- ssh-p2p server
 
-# backend protocol
-
-- RTCDataChannel/WebRTC: https://github.com/pions/webrtc
-- signaling server: https://nobo-signaling.appspot.com/
-
-  src: [signaling/gae](https://github.com/nobonobo/ssh-p2p/signaling/gae)
-
-thx! https://github.com/pions/webrtc
-
-# install
-
-```sh
-$ go get -u github.com/nobonobo/ssh-p2p
-```
-
 # usage
 
 ## server side
