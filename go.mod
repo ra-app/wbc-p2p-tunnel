@@ -1,9 +1,10 @@
 module github.com/nobonobo/ssh-p2p
 
+go 1.16
+
 require (
-	github.com/google/go-cmp v0.2.0 // indirect
-	github.com/google/uuid v1.0.0
-	github.com/pions/transport v0.1.0 // indirect
-	github.com/pions/webrtc v1.2.0
-	gotest.tools v2.2.0+incompatible // indirect
+	github.com/google/uuid v1.2.0
+	github.com/joho/godotenv v1.3.0
+	github.com/pion/ice/v2 v2.1.7
+	github.com/pion/webrtc/v3 v3.0.26
 )

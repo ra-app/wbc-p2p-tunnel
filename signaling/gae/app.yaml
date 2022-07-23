@@ -5,7 +5,7 @@ env_variables:
 
 handlers:
 - url: /.*
-  script: _go_app
+  script: auto
   secure: always
 
 instance_class: B1
