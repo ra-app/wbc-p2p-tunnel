@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -16,13 +18,16 @@ import (
 	"path"
 	"strings"
 	"syscall"
+	"syscall/js"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
+	"github.com/melbahja/goph"
 	"github.com/nobonobo/ssh-p2p/signaling"
 	"github.com/pion/ice/v2"
 	"github.com/pion/webrtc/v3"
+	"golang.org/x/crypto/ssh"
 )
 
 const usage = `Usage: ssh-p2p SUBCMD [options]
@@ -148,6 +153,130 @@ func pull(ctx context.Context, id string) <-chan signaling.ConnectInfo {
 }
 
 func main() {
+
+	js.Global().Set("sshconnect", js.FuncOf(sshconnect))
+
+	var addr string = "127.0.0.1:2222"
+	var key string = "3e76717e-b4c9-415b-a329-71e81d669e81"
+	//flags.StringVar(&addr, "listen", "127.0.0.1:2222", "listen addr = host:port")
+	//flags.StringVar(&key, "key", "sample", "connection key")
+
+	l, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("listen:", addr)
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGINT)
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		for {
+			sock, err := l.Accept()
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			go connect(ctx, key, sock)
+		}
+
+	}()
+	//sshconnect()
+	<-sig
+	cancel()
+
+}
+
+func VerifyHost(host string, remote net.Addr, key ssh.PublicKey) error {
+
+	//
+	// If you want to connect to new hosts.
+	// here your should check new connections public keys
+	// if the key not trusted you shuld return an error
+	//
+
+	// hostFound: is host in known hosts file.
+	// err: error if key not in known hosts file OR host in known hosts file but key changed!
+	hostFound, err := goph.CheckKnownHost(host, remote, key, "")
+
+	// Host in known hosts but key mismatch!
+	// Maybe because of MAN IN THE MIDDLE ATTACK!
+	if hostFound && err != nil {
+
+		return err
+	}
+
+	// handshake because public key already exists.
+	if hostFound && err == nil {
+
+		return nil
+	}
+
+	// Ask user to check if he trust the host public key.
+	if askIsHostTrusted(host, key) == false {
+
+		// Make sure to return error on non trusted keys.
+		return errors.New("you typed no, aborted!")
+	}
+
+	// Add the new host to known hosts file.
+	return goph.AddKnownHost(host, remote, key, "")
+}
+
+func askIsHostTrusted(host string, key ssh.PublicKey) bool {
+
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Printf("Unknown Host: %s \nFingerprint: %s \n", host, ssh.FingerprintSHA256(key))
+	fmt.Print("Would you like to add it? type yes or no: ")
+
+	a, err := reader.ReadString('\n')
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return strings.ToLower(strings.TrimSpace(a)) == "yes"
+}
+
+func sshconnect(this js.Value, inputs []js.Value) interface{} {
+	//func sshconnect() {
+
+	_, err := goph.DefaultKnownHosts()
+	if err != nil {
+
+		//return inputs[0].Float()
+		//return
+	}
+
+	// Start new ssh connection with private key.
+	auth := goph.Password("Satsumafire123!!!")
+
+	client, err := goph.NewConn(&goph.Config{
+		User:     "webconnect",
+		Addr:     "192.168.1.199",
+		Port:     2022,
+		Auth:     auth,
+		Timeout:  goph.DefaultTimeout,
+		Callback: ssh.InsecureIgnoreHostKey(),
+	})
+
+	if err != nil {
+		log.Fatal(">>>>err ssh connect: ", err)
+	}
+
+	// Execute your command.
+	out, err := client.Run("ip a")
+
+	if err != nil {
+		log.Fatal(">>>>>> execute command: ", err)
+	}
+
+	// Get your output as []byte.
+	fmt.Println(string(out))
+	return inputs[0].Float()
+}
+
+func mainorg() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("failed to load env file")

@@ -1,0 +1,20 @@
+<html>
+<title>Web Assembly Work</title>
+	<head>
+		<meta charset="utf-8">
+		<script src="wasm_exec.js"></script>
+		<script>
+			const go = new Go();
+			WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+				go.run(result.instance);
+			});
+		</script>
+	</head>
+	<body>
+	<div id="main"> 
+	<center>
+    Check the javascript console output of your browser to ensure execution.
+    </center>
+	</div>
+	</body>
+</html>
