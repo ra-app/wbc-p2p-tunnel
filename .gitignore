@@ -26,3 +26,9 @@ _testmain.go
 ssh-p2p
 vendor/
 .env
+.vscode/targets.log
+.vscode/settings.json
+.vscode/dryrun.log
+.vscode/configurationCache.log
+public/main.wasm
+public/main.wasm
