@@ -26,3 +26,5 @@ _testmain.go
 ssh-p2p
 vendor/
 .env
+*.log
+.vscode/settings.json
