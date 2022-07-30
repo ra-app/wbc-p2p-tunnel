@@ -6,5 +6,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/joho/godotenv v1.3.0
 	github.com/pion/ice/v2 v2.1.7
+	github.com/pion/logging v0.2.2
+	github.com/pion/turn/v2 v2.0.5
 	github.com/pion/webrtc/v3 v3.0.26
 )
