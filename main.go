@@ -269,6 +269,59 @@ func main() {
 		if err := flags.Parse(os.Args[2:]); err != nil {
 			log.Fatalln(err)
 		}
+
+		// TURN client won't create a local listening socket by itself.
+		conn, err := net.ListenPacket("udp4", "0.0.0.0:0")
+		if err != nil {
+			panic(err)
+		}
+		defer func() {
+			if closeErr := conn.Close(); closeErr != nil {
+				panic(closeErr)
+			}
+		}()
+
+		turnServerAddr := fmt.Sprintf("%s:%d", "51.68.174.6", 3478)
+
+		cfg := &turn.ClientConfig{
+			STUNServerAddr: turnServerAddr,
+			TURNServerAddr: turnServerAddr,
+			Conn:           conn,
+			Username:       "foo",
+			Password:       "bar",
+			Realm:          "pion.ly",
+			LoggerFactory:  logging.NewDefaultLoggerFactory(),
+		}
+
+		client, err := turn.NewClient(cfg)
+		if err != nil {
+			panic(err)
+		}
+		defer client.Close()
+
+		// Start listening on the conn provided.
+		err = client.Listen()
+		if err != nil {
+			panic(err)
+		}
+
+		// Allocate a relay socket on the TURN server. On success, it
+		// will return a net.PacketConn which represents the remote
+		// socket.
+		relayConn, err := client.Allocate()
+		if err != nil {
+			panic(err)
+		}
+		defer func() {
+			if closeErr := relayConn.Close(); closeErr != nil {
+				panic(closeErr)
+			}
+		}()
+
+		// The relayConn's local address is actually the transport
+		// address assigned on the TURN server.
+		log.Printf("relayed-address=%s", relayConn.LocalAddr().String())
+
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, syscall.SIGINT)
 		ctx, cancel := context.WithCancel(context.Background())
